@@ -1,74 +1,74 @@
-# Thread-Safe STL (TS_STL) 库
+# Thread-Safe STL (TS_STL) Library
 
-这是一个高性能、易用的线程安全STL容器代理库。提供了一个优雅的模板框架（Head-only），用于创建线程安全的STL容器，支持互斥锁、读写锁、自旋锁三种同步机制。
+A high-performance, easy-to-use thread-safe STL container proxy library. Provides an elegant template framework (Header-only) for creating thread-safe STL containers with support for three synchronization mechanisms: mutex, read-write lock, and spin lock.
 
-## 📋 特性概览
+**[中文 README](README_ZH.md)**
 
-### 核心特性
-- ✅ **四锁策略**: 互斥锁、读写锁、自旋锁和无锁，可在初始化时选择
-- ✅ **自动同步**: 所有关键操作自动线程安全，无需手动加锁
-- ✅ **STL兼容**: 支持隐式转换到标准容器，与STL算法库兼容
-- ✅ **零开销抽象**: 编译时多态（CRTP），不使用的代码路径被完全优化掉
-- ✅ **异常安全**: RAII模式确保异常情况下的安全性
-- ✅ **丰富API**: operator[]、get/set接口、迭代、查找、容量管理等
-- ✅ **高性能**: 最小化锁粒度，支持移动语义
-- ✅ **易于扩展**: 使用 CRTP 减少代码重复，添加新容器只需最少代码
+## 📋 Features Overview
 
-### 实现特性
-- 🔒 互斥锁（Mutex）: 简洁高效，适合通用场景
-- 🔐 读写锁（ReadWrite）: 允许并发读，适合读密集型应用
-- 🔄 自旋锁（SpinLock）: 极低延迟，适合短临界区
-- ⚡ 无锁（LockFree）: 零开销，极限性能，需要外部同步
-- 📦 RAII模式: 自动锁管理
-- 🎯 编译时条件: 零成本的策略选择
-- 🛡️ 异常处理: 完整的异常安全保证
-- 🏗️ CRTP设计: 静态多态，消除代码重复
+### Core Features
+- ✅ **Four Lock Strategies**: Mutex, Read-Write Lock, Spin Lock, and Lock-Free - selectable at initialization
+- ✅ **Automatic Synchronization**: All critical operations are automatically thread-safe, no manual locking required
+- ✅ **STL Compatible**: Supports implicit conversion to standard containers and compatible with STL algorithms
+- ✅ **Zero-Cost Abstraction**: Compile-time polymorphism (CRTP), unused code paths are completely optimized away
+- ✅ **Exception Safe**: RAII pattern ensures safety in exceptional situations
+- ✅ **Rich API**: operator[], get/set interfaces, iteration, search, capacity management, etc.
+- ✅ **High Performance**: Minimized lock granularity, supports move semantics
+- ✅ **Easy to Extend**: Using CRTP to reduce code duplication, adding new containers requires minimal code
 
-### 🔴 多线程安全性对比
+### Implementation Features
+- 🔒 Mutex: Simple and efficient, suitable for general scenarios
+- 🔐 Read-Write Lock: Allows concurrent reads, ideal for read-heavy applications
+- 🔄 Spin Lock: Ultra-low latency, suitable for short critical sections
+- ⚡ Lock-Free: Zero overhead, ultimate performance, requires external synchronization
+- 📦 RAII Pattern: Automatic lock management
+- 🎯 Compile-Time Conditions: Zero-cost strategy selection
+- 🛡️ Exception Handling: Complete exception safety guarantees
+- 🏗️ CRTP Design: Static polymorphism, eliminates code duplication
 
-| 测试 | TS_STL | STD 容器 |
-|------|--------|----------|
-| 单线程写入 | ✅ 100% 正确 | ✅ 100% 正确 |
-| **并发写入** | ✅ **100% 正确** | ❌ **CRASH** |
-| **并发读取** | ✅ **100% 正确** | ❌ **线程不安全** |
-| **混合读写** | ✅ **100% 正确** | ❌ **CRASH** |
+### 🔴 Thread Safety Comparison
 
-> ⚠️ **重要**: STD 容器在多线程环境下会导致程序崩溃！
+| Test | TS_STL | STD Containers |
+|------|--------|----------------|
+| Single-Thread Write | ✅ 100% Correct | ✅ 100% Correct |
+| **Concurrent Write** | ✅ **100% Correct** | ❌ **CRASH** |
+| **Concurrent Read** | ✅ **100% Correct** | ❌ **Thread-Unsafe** |
+| **Mixed Read/Write** | ✅ **100% Correct** | ❌ **CRASH** |
 
-### 并发读写性能建议速查
+> ⚠️ **Important**: STD containers crash in multi-threaded environments!
+
+### Concurrent Read/Write Performance Quick Reference
 
 ```
-✅ 选择 vectorMutex       → 通用最佳，所有场景稳定高效
-✅ 选择 vectorLockFree    → 单线程初始化，零开销(100%性能)
-⚠️ 谨慎 vectorRW          → 读写锁优势未明显体现
-⚠️ 避免 vectorSpinLock    → 高并发竞争场景性能差(仅20%)
-❌ 多线程不要用 std::vector → 线程不安全会崩溃
+✅ Choose vectorMutex       → Best for general use, stable and efficient in all scenarios
+✅ Choose vectorLockFree    → Single-thread initialization, zero overhead (100% performance)
+⚠️ Caution vectorRW         → Read-write lock advantages not clearly shown
+⚠️ Avoid vectorSpinLock     → Poor performance in high contention (only 20%)
+❌ Multi-thread don't use std::vector → Thread-unsafe, will crash
 ```
 
-**性能数据**: 
-- `vectorLockFree` 单线程性能 = std::vector 的 100%（零开销）
-- `vectorMutex` 多线程性能 = std::vector+mutex 的 35-54%（安全+易用）
-- `vectorSpinLock` 高竞争下仅 std::vector+mutex 的 8-20%（不推荐）
+**Performance Data**: 
+- `vectorLockFree` single-thread performance = std::vector's 100% (zero overhead)
+- `vectorMutex` multi-thread performance = std::vector+mutex's 79-87% (safe + easy to use)
 
+### 🎯 Data Accuracy Verification
 
-### 🎯 数据准确性验证
-
-| 锁类型 | 单线程 | 并发写 | 并发读 | 90%读10%写 | 50%读50%写 | 大对象 | 总体 |
-|--------|--------|--------|--------|-----------|-----------|--------|------|
+| Lock Type | Single-Thread | Concurrent Write | Concurrent Read | 90% Read 10% Write | 50% Read 50% Write | Large Objects | Total |
+|-----------|--------|--------|-----------|-----------|-----------|--------|------|
 | **Mutex** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ 6/6 |
 | **SpinLock** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ 6/6 |
 | **RW-Lock** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ 6/6 |
 | **STD Vector** | ✅ | ❌ CRASH | ❌ UNSAFE | ❌ CRASH | ❌ CRASH | - | ❌ 0/6 |
 
-**结论**: 
-- ✅ **TS_STL 在所有 6 个场景都 100% 正确 (18/18 测试通过)**
-- ❌ **STD 容器在多线程环境下完全不安全**
+**Conclusion**: 
+- ✅ **TS_STL passes all 6 scenarios with 100% correctness (18/18 tests passed)**
+- ❌ **STD containers are completely unsafe in multi-threaded environments**
 
-## 性能测试结果
+## Performance Test Results
 
 ### Concurrent Read
 
-| 容器类型 | 耗时(ms) | 操作数 | 吞吐量(ops/ms) | 相对性能 | 数据正确 |
+| Container Type | Time(ms) | Operations | Throughput(ops/ms) | Relative Performance | Data Correct |
 |---------|---------|--------|---------------|---------|----------|
 | std::vector+mutex | 20.45 | 1200000 | 58672 | 100.0% | ✓ |
 | vectorMutex | 23.46 | 1200000 | 51152 | 87.2% | ✓ |
@@ -77,7 +77,7 @@
 
 ### Concurrent Write
 
-| 容器类型 | 耗时(ms) | 操作数 | 吞吐量(ops/ms) | 相对性能 | 数据正确 |
+| Container Type | Time(ms) | Operations | Throughput(ops/ms) | Relative Performance | Data Correct |
 |---------|---------|--------|---------------|---------|----------|
 | std::vector+mutex | 16.80 | 800000 | 47611 | 100.0% | ✓ |
 | vectorMutex | 20.44 | 800000 | 39143 | 82.2% | ✓ |
@@ -86,7 +86,7 @@
 
 ### Mixed R/W (50:50)
 
-| 容器类型 | 耗时(ms) | 操作数 | 吞吐量(ops/ms) | 相对性能 | 数据正确 |
+| Container Type | Time(ms) | Operations | Throughput(ops/ms) | Relative Performance | Data Correct |
 |---------|---------|--------|---------------|---------|----------|
 | std::vector+mutex | 12.69 | 800000 | 63037 | 100.0% | ✓ |
 | vectorMutex | 15.98 | 800000 | 50075 | 79.4% | ✓ |
@@ -95,7 +95,7 @@
 
 ### Mixed R/W (90:10)
 
-| 容器类型 | 耗时(ms) | 操作数 | 吞吐量(ops/ms) | 相对性能 | 数据正确 |
+| Container Type | Time(ms) | Operations | Throughput(ops/ms) | Relative Performance | Data Correct |
 |---------|---------|--------|---------------|---------|----------|
 | std::vector+mutex | 15.92 | 1000000 | 62812 | 100.0% | ✓ |
 | vectorMutex | 19.83 | 1000000 | 50441 | 80.3% | ✓ |
@@ -104,7 +104,7 @@
 
 ### Single Thread Push Back
 
-| 容器类型 | 耗时(ms) | 操作数 | 吞吐量(ops/ms) | 相对性能 | 数据正确 |
+| Container Type | Time(ms) | Operations | Throughput(ops/ms) | Relative Performance | Data Correct |
 |---------|---------|--------|---------------|---------|----------|
 | std::vector | 2.22 | 1000000 | 449800 | 100.0% | ✓ |
 | vectorMutex | 6.68 | 1000000 | 149720 | 33.3% | ✓ |
@@ -114,243 +114,242 @@
 
 ### Map Concurrent Insert
 
-| 容器类型 | 耗时(ms) | 操作数 | 吞吐量(ops/ms) | 相对性能 | 数据正确 |
+| Container Type | Time(ms) | Operations | Throughput(ops/ms) | Relative Performance | Data Correct |
 |---------|---------|--------|---------------|---------|----------|
 | mapMutex | 1852.94 | 80000 | 43 | 100.0% | ✓ |
 | mapRW | 2507.65 | 80000 | 32 | 73.9% | ✓ |
 
 ### Map Concurrent Read
 
-| 容器类型 | 耗时(ms) | 操作数 | 吞吐量(ops/ms) | 相对性能 | 数据正确 |
+| Container Type | Time(ms) | Operations | Throughput(ops/ms) | Relative Performance | Data Correct |
 |---------|---------|--------|---------------|---------|----------|
 | mapMutex | 60.15 | 1200000 | 19951 | 100.0% | ✓ |
 | mapRW | 98.54 | 1200000 | 12178 | 61.0% | ✓ |
 
 ### Map Single Thread Insert
 
-| 容器类型 | 耗时(ms) | 操作数 | 吞吐量(ops/ms) | 相对性能 | 数据正确 |
+| Container Type | Time(ms) | Operations | Throughput(ops/ms) | Relative Performance | Data Correct |
 |---------|---------|--------|---------------|---------|----------|
 | mapMutex | 124.77 | 10000 | 80 | 97.3% | ✓ |
 | mapRW | 121.34 | 10000 | 82 | 100.0% | ✓ |
 
-### 性能使用建议
+### Performance Usage Recommendations
 
 ```
-场景                     推荐容器
-----------------------  ---------------------------
-单线程/初始化           vectorLockFree (零开销)
-多线程并发写入           vectorMutex or vectorSpinLock
-多线程并发读取           vectorRW (读写锁优势明显)
-读多写少(90:10)         vectorRW (读写锁最优)
-读写均衡(50:50)         vectorMutex (通用稳定)
-高竞争场景              避免 vectorSpinLock
+Scenario                      Recommended Container
+-------------------------     ---------------------------
+Single-thread/Initialization  vectorLockFree (zero overhead)
+Multi-thread concurrent write vectorMutex or vectorSpinLock
+Multi-thread concurrent read  vectorRW (clear RW-lock advantage)
+Read-heavy (90:10)            vectorRW (RW-lock optimal)
+Balanced (50:50)              vectorMutex (universally stable)
+High-contention scenario      Avoid vectorSpinLock
 ```
 
 ---
 
-### 使用建议
+### Usage Recommendations
 
 ```cpp
-// ✅ 正确：初始化阶段
+// ✅ Correct: Initialization phase
 vectorLockFree<int> init_data;
 for (int i = 0; i < 1000000; ++i) {
-    init_data.push_back(i);  // 极快！
+    init_data.push_back(i);  // Very fast!
 }
 
-// 切换到线程安全版本
+// Switch to thread-safe version
 vectorMutex<int> safe_data(init_data);
 
-// ❌ 错误：并发访问
+// ❌ Wrong: Concurrent access
 std::thread t1([&init_data]() { init_data.push_back(1); });
 std::thread t2([&init_data]() { init_data.push_back(2); });
-// 会导致崩溃！
+// Will crash!
 ```
 
+## 📦 Supported Containers
 
-## 📦 支持的容器
+TS_STL now supports the following thread-safe containers:
 
-TS_STL 现已支持以下线程安全容器：
+### Implemented Containers
 
-### 已实现的容器
+| Container | Description | Use Case |
+|-----------|-------------|----------|
+| **vector** | Sequence container with fast random access | Most data storage scenarios |
+| **list** | Linked list container with fast insert/delete | Frequent insert/delete operations |
+| **map** | Ordered associative container with key-value pairs | Dictionary, cache, configuration storage |
 
-| 容器 | 说明 | 用途 |
-|------|------|------|
-| **vector** | 序列容器，快速随机访问 | 大多数数据存储场景 |
-| **list** | 链表容器，快速插入删除 | 频繁插入删除操作 |
-| **map** | 有序关联容器，键值对存储 | 字典、缓存、配置存储 |
+#### Container Feature Comparison
 
-#### 容器功能对比
+| Feature | Vector | List | Map |
+|---------|--------|------|-----|
+| Random Access | ✅ O(1) | ❌ O(n) | ❌ O(log n) |
+| Sequential Traversal | ✅ | ✅ | ✅ |
+| Head Insertion | ❌ O(n) | ✅ O(1) | ✅ O(log n) |
+| Tail Insertion | ✅ O(1)* | ✅ O(1) | ✅ O(log n) |
+| Key-Value Query | ❌ | ❌ | ✅ O(log n) |
+| Thread-Safe | ✅ | ✅ | ✅ |
+| Multiple Lock Strategies | ✅ (4 types) | ✅ (4 types) | ✅ (4 types) |
 
-| 功能 | Vector | List | Map |
-|------|--------|------|-----|
-| 随机访问 | ✅ O(1) | ❌ O(n) | ❌ O(log n) |
-| 顺序遍历 | ✅ | ✅ | ✅ |
-| 头部插入 | ❌ O(n) | ✅ O(1) | ✅ O(log n) |
-| 尾部插入 | ✅ O(1)* | ✅ O(1) | ✅ O(log n) |
-| 键值查询 | ❌ | ❌ | ✅ O(log n) |
-| 线程安全 | ✅ | ✅ | ✅ |
-| 多锁策略 | ✅ (4种) | ✅ (4种) | ✅ (4种) |
-
-### Vector 特性
+### Vector Features
 
 ```cpp
 #include "ts_stl.hpp"
 
-// 创建线程安全的向量（默认使用互斥锁）
+// Create a thread-safe vector (default uses mutex)
 ts_stl::vectorMutex<int> vec;
 
-// 使用就像标准vector一样
+// Use just like std::vector
 vec.push_back(1);
 vec.push_back(2);
-vec[0] = 10;              // 线程安全的数组风格访问
-std::cout << vec.size();  // 线程安全的查询
+vec[0] = 10;              // Thread-safe array-style access
+std::cout << vec.size();  // Thread-safe query
 ```
 
-### List 特性
+### List Features
 
 ```cpp
 #include "ts_stl.hpp"
 
-// 创建线程安全的链表
+// Create a thread-safe list
 ts_stl::listMutex<int> list;
 
-// 支持list特有操作
+// Support list-specific operations
 list.push_back(1);
 list.push_front(0);
-list.sort();              // 排序
-list.reverse();           // 反转
-list.remove(1);           // 删除指定值
+list.sort();              // Sort
+list.reverse();           // Reverse
+list.remove(1);           // Remove all occurrences of value 1
 ```
 
-### Map 特性
+### Map Features
 
 ```cpp
 #include "ts_stl.hpp"
 
-// 创建线程安全的字典
+// Create a thread-safe dictionary
 ts_stl::mapMutex<std::string, int> scores;
 
-// 插入和查询
+// Insert and query
 scores.insert("Alice", 90);
 scores.set("Bob", 85);
 
-// 获取值（支持默认值）
+// Get value (supports default value)
 int score = scores.get("Alice");
-int missing = scores.get("Charlie", -1);  // 不存在返回-1
+int missing = scores.get("Charlie", -1);  // Return -1 if not found
 
-// 检查存在性
+// Check existence
 if (scores.contains("Alice")) {
     std::cout << "Alice found!" << std::endl;
 }
 
-// 遍历
+// Traverse
 scores.for_each([](const auto& key, const auto& value) {
     std::cout << key << ": " << value << std::endl;
 });
 
-// 删除
+// Delete
 scores.erase("Bob");
 
-// 条件统计
+// Conditional statistics
 int high_scores = scores.count_if([](const auto& key, const auto& value) {
     return value >= 80;
 });
 ```
 
-### operator[] vs get/set - 选择指南
+### operator[] vs get/set - Selection Guide
 
-| 方法 | 用途 | 边界检查 | 推荐场景 |
-|------|------|---------|---------|
-| `vec[i]` | 快速读写 | ❌ 无 | 已验证索引的紧密循环 |
-| `vec.get(i)` | 仅读取 | ❌ 无 | 并发多读场景 |
-| `vec.set(i, val)` | 仅写入 | ❌ 无 | 原语意清晰的更新 |
-| `vec.at(i)` | 安全读写 | ✅ 有 | 不信任索引来源的代码 |
+| Method | Purpose | Bounds Checking | Recommended Scenario |
+|--------|---------|-----------------|----------------------|
+| `vec[i]` | Fast read/write | ❌ No | Tight loops with verified indices |
+| `vec.get(i)` | Read only | ❌ No | Concurrent multi-read scenarios |
+| `vec.set(i, val)` | Write only | ❌ No | Clear semantics for updates |
+| `vec.at(i)` | Safe read/write | ✅ Yes | Code that doesn't trust index sources |
 
 ```cpp
-// 性能敏感的紧密循环 - 用 operator[]
+// Performance-critical tight loop - use operator[]
 for (size_t i = 0; i < vec.size(); ++i) {
-    total += vec[i];  // 快速，无检查开销
+    total += vec[i];  // Fast, no check overhead
 }
 
-// 需要安全性 - 用 at()
+// Need safety - use at()
 try {
-    std::cout << vec.at(100);  // 自动检查越界
+    std::cout << vec.at(100);  // Automatic bounds check
 } catch (const std::out_of_range& e) {
     std::cerr << "Error: " << e.what() << std::endl;
 }
 ```
 
-### 对象初始化 - 选择锁策略
+### Object Initialization - Lock Strategy Selection
 
-#### 方式1️⃣: 使用便利类型别名（推荐）
+#### Method 1️⃣: Using Convenience Type Aliases (Recommended)
 
 ```cpp
-// 互斥锁版本 - 通用、高效
+// Mutex version - universal, efficient
 vectorMutex<int> mutex_vec;
 mutex_vec.push_back(1);
 mutex_vec.push_back(2);
 
-// 读写锁版本 - 适合读多写少的场景（C++17+）
+// Read-write lock version - for read-heavy scenarios (C++17+)
 vectorRW<std::string> rw_vec;
 rw_vec.push_back("hello");
 rw_vec.push_back("world");
 
-// 无锁版本 - 极限性能，单线程初始化阶段 ⚡
+// Lock-free version - ultimate performance, single-thread initialization ⚡
 vectorLockFree<int> lockfree_vec;
 for (int i = 0; i < 1000000; ++i) {
-    lockfree_vec.push_back(i);  // 零锁开销！
+    lockfree_vec.push_back(i);  // Zero lock overhead!
 }
 ```
 
-#### 方式2️⃣: 显式指定锁策略模板参数
+#### Method 2️⃣: Explicitly Specify Lock Strategy Template Parameter
 
 ```cpp
-// 互斥锁（明确指定）
+// Mutex (explicitly specified)
 vector<int, LockPolicy::Mutex> explicit_mutex;
 explicit_mutex.push_back(100);
 
-// 无锁策略（明确指定 - 需要外部同步）
+// Lock-free strategy (explicitly specified - requires external synchronization)
 vector<int, LockPolicy::LockFree> explicit_lockfree;
 explicit_lockfree.push_back(100);
 
-// 读写锁（明确指定，仅C++17+）
+// Read-write lock (explicitly specified, C++17+ only)
 #if TS_STL_SUPPORT_RW_LOCK
 vector<int, LockPolicy::ReadWrite> explicit_rw;
 explicit_rw.push_back(200);
 #endif
 ```
 
-#### 方式3️⃣: 默认初始化
+#### Method 3️⃣: Default Initialization
 
 ```cpp
-// 默认使用互斥锁
+// Default uses mutex
 vector<double> default_vec;
 default_vec.push_back(3.14);
 ```
 
-#### 方式4️⃣: 构造时传入初始数据
+#### Method 4️⃣: Initialize with Data at Construction
 
 ```cpp
-// 创建包含初始元素的向量
-vectorMutex<int> initialized_vec(5);  // 5个默认元素
-vectorMutex<int> filled_vec(5, 42);   // 5个值为42的元素
+// Create a vector with initial elements
+vectorMutex<int> initialized_vec(5);  // 5 default elements
+vectorMutex<int> filled_vec(5, 42);   // 5 elements with value 42
 
-// 使用迭代器范围初始化
+// Initialize from iterator range
 std::vector<int> init_data = {1, 2, 3, 4, 5};
 vectorMutex<int> from_range(init_data.begin(), init_data.end());
 ```
 
-### Vector 多线程操作
+### Vector Multi-threaded Operations
 
 ```cpp
 vectorMutex<int> shared_vec;
 
-// 多个线程可以安全地同时访问
+// Multiple threads can safely access concurrently
 std::vector<std::thread> threads;
 for (int i = 0; i < 4; ++i) {
     threads.emplace_back([&shared_vec, i]() {
         for (int j = 0; j < 100; ++j) {
-            shared_vec.push_back(i * 100 + j);  // 自动线程安全！
+            shared_vec.push_back(i * 100 + j);  // Automatically thread-safe!
         }
     });
 }
@@ -358,24 +357,24 @@ for (int i = 0; i < 4; ++i) {
 for (auto& t : threads) {
     t.join();
 }
-// 现在有 400 个元素，完全没有竞态条件
+// Now has 400 elements, completely free of race conditions
 ```
 
-### List 多线程操作
+### List Multi-threaded Operations
 
 ```cpp
 listMutex<int> shared_list;
 
-// 多线程安全地添加元素
+// Multi-threaded safe element addition
 std::vector<std::thread> threads;
 for (int i = 0; i < 4; ++i) {
     threads.emplace_back([&shared_list, i]() {
         for (int j = 0; j < 50; ++j) {
-            // 既可以从末尾添加
+            // Can add to the back
             if (i % 2 == 0) {
                 shared_list.push_back(i * 50 + j);
             } else {
-                // 也可以从首部添加
+                // Or add to the front
                 shared_list.push_front(i * 50 + j);
             }
         }
@@ -386,17 +385,17 @@ for (auto& t : threads) {
     t.join();
 }
 
-// 排序和处理
+// Sort and process
 shared_list.sort();
 shared_list.remove_if([](int x) { return x % 10 == 0; });
 ```
 
-### Map 多线程操作
+### Map Multi-threaded Operations
 
 ```cpp
 mapMutex<std::string, int> cache;
 
-// 多线程安全地更新缓存
+// Multi-threaded safe cache updates
 std::vector<std::thread> threads;
 for (int i = 0; i < 4; ++i) {
     threads.emplace_back([&cache, i]() {
@@ -411,16 +410,16 @@ for (auto& t : threads) {
     t.join();
 }
 
-// 多线程读取（使用读写锁可以加速）
+// Multi-threaded reads (use read-write lock for speed boost)
 mapRW<std::string, int> read_cache;
-// ... 初始化数据 ...
+// ... initialize data ...
 
 std::vector<std::thread> readers;
-for (int i = 0; i < 8; ++i) {  // 8个读线程
+for (int i = 0; i < 8; ++i) {  // 8 reader threads
     readers.emplace_back([&read_cache]() {
         for (int j = 0; j < 1000; ++j) {
             std::string key = "key_" + std::to_string(j);
-            int value = read_cache.get(key, -1);  // 线程安全的读取
+            int value = read_cache.get(key, -1);  // Thread-safe read
         }
     });
 }
@@ -429,439 +428,440 @@ for (auto& t : readers) {
     t.join();
 }
 
-// 遍历缓存中的所有项
+// Traverse all items in cache
 cache.for_each([](const auto& key, const auto& value) {
     std::cout << key << " -> " << value << std::endl;
 });
 ```
 
-| 场景 | 推荐方案 | 用法 |
-|------|---------|------|
-| 通用、读写均衡 | **互斥锁** | `vectorMutex<T>` |
-| 读操作远多于写 | **读写锁** (C++17+) | `vectorRW<T>` |
-| 不确定选择 | **互斥锁** | `vector<T>` |
-| 需要最大兼容性 | **互斥锁** | C++11/14 下自动选择 |
+| Scenario | Recommended Solution | Usage |
+|----------|---------------------|-------|
+| Universal, balanced read/write | **Mutex** | `vectorMutex<T>` |
+| Read operations far exceed writes | **Read-Write Lock** (C++17+) | `vectorRW<T>` |
+| Unsure about choice | **Mutex** | `vector<T>` |
+| Need maximum compatibility | **Mutex** | Auto-selected under C++11/14 |
 
-## 📚 主要API
+## 📚 Main API
 
-### 支持的容器
+### Supported Containers
 
-| 容器 | 类名 | 类型别名 | 特点 |
-|------|------|---------|------|
-| `std::vector` | `vector<T, Policy>` | `vectorMutex<T>` / `vectorRW<T>` | 随机访问，动态数组 |
-| `std::list` | `list<T, Policy>` | `listMutex<T>` / `listRW<T>` | 双向链表，高效插删 |
-| `std::map` | `map<K, V, Comp, Policy>` | `mapMutex<K,V>` / `mapRW<K,V>` | 有序键值对，快速查找 |
+| Container | Class Name | Type Alias | Features |
+|-----------|-----------|-----------|----------|
+| `std::vector` | `vector<T, Policy>` | `vectorMutex<T>` / `vectorRW<T>` | Random access, dynamic array |
+| `std::list` | `list<T, Policy>` | `listMutex<T>` / `listRW<T>` | Doubly-linked list, efficient insert/delete |
+| `std::map` | `map<K, V, Comp, Policy>` | `mapMutex<K,V>` / `mapRW<K,V>` | Ordered key-value pairs, fast lookup |
 
-### Vector 元素访问
+### Vector Element Access
 ```cpp
-vec[index]                  // ✨ 新增：数组风格访问（线程安全，无边界检查）
-vec.get(index)              // 获取元素（线程安全，等价于 operator[]）
-vec.set(index, value)       // 设置元素（线程安全）
-vec.at(index)               // 安全访问（带边界检查）
-vec.front()                 // 获取首元素
-vec.back()                  // 获取末尾元素
+vec[index]                  // ✨ New: Array-style access (thread-safe, no bounds check)
+vec.get(index)              // Get element (thread-safe, equivalent to operator[])
+vec.set(index, value)       // Set element (thread-safe)
+vec.at(index)               // Safe access (with bounds check)
+vec.front()                 // Get first element
+vec.back()                  // Get last element
 ```
 
-### List 元素访问
+### List Element Access
 ```cpp
-list.front()                // 获取首元素
-list.back()                 // 获取末尾元素
-list.set_front(value)       // 设置首元素
-list.set_back(value)        // 设置末尾元素
+list.front()                // Get first element
+list.back()                 // Get last element
+list.set_front(value)       // Set first element
+list.set_back(value)        // Set last element
 ```
 
-### Map 元素访问
+### Map Element Access
 ```cpp
-map[key]                    // 获取/插入元素（线程安全）
-map.get(key)                // 获取元素（不存在返回默认值）
-map.get(key, default_val)   // 获取元素，指定默认值
-map.set(key, value)         // 设置元素
-map.at(key)                 // 安全访问（带边界检查）
-map.contains(key)           // 检查键是否存在
-map.count(key)              // 计数（0 或 1）
-map.count_if(predicate)     // 条件计数
-map.insert(key, value)      // 插入元素
-map.erase(key)              // 删除元素
-map.find_if(predicate)      // 条件查找
+map[key]                    // Get/insert element (thread-safe)
+map.get(key)                // Get element (return default if not found)
+map.get(key, default_val)   // Get element with specified default value
+map.set(key, value)         // Set element
+map.at(key)                 // Safe access (with bounds check)
+map.contains(key)           // Check if key exists
+map.count(key)              // Count (0 or 1)
+map.count_if(predicate)     // Conditional count
+map.insert(key, value)      // Insert element
+map.erase(key)              // Delete element
+map.find_if(predicate)      // Conditional search
 ```
 
-### 通用容量管理（Vector & List & Map）
+### Generic Capacity Management (Vector & List & Map)
 ```cpp
-vec.size()                  // 获取大小
-vec.capacity()              // 获取容量（Vector）
-vec.empty()                 // 检查是否为空
-vec.reserve(count)          // 预留空间（Vector）
-vec.resize(count)           // 改变大小
-vec.shrink_to_fit()         // 收缩到实际大小（Vector）
-map.clear()                 // 清空容器
+vec.size()                  // Get size
+vec.capacity()              // Get capacity (Vector)
+vec.empty()                 // Check if empty
+vec.reserve(count)          // Reserve space (Vector)
+vec.resize(count)           // Change size
+vec.shrink_to_fit()         // Shrink to actual size (Vector)
+map.clear()                 // Clear container
 ```
 
-### Vector 特定操作
+### Vector-Specific Operations
 ```cpp
-vec.push_back(value)        // 添加元素
-vec.pop_back()              // 移除末尾元素
-vec.emplace_back(args...)   // 原地构造
-vec.insert(pos, value)      // 插入
-vec.erase(pos)              // 删除
+vec.push_back(value)        // Add element
+vec.pop_back()              // Remove last element
+vec.emplace_back(args...)   // In-place construct
+vec.insert(pos, value)      // Insert element
+vec.erase(pos)              // Delete element
 ```
 
-### List 特定操作
+### List-Specific Operations
 ```cpp
-list.push_back(value)       // 添加到末尾
-list.pop_back()             // 移除末尾元素
-list.push_front(value)      // 添加到首部
-list.pop_front()            // 移除首部元素
-list.emplace_back(args...)  // 原地构造
-list.emplace_front(args...) // 首部原地构造
-list.remove(value)          // 移除所有值为value的元素
-list.remove_if(predicate)   // 移除满足条件的元素
-list.reverse()              // 反转列表
-list.sort()                 // 排序列表
+list.push_back(value)       // Add to back
+list.pop_back()             // Remove from back
+list.push_front(value)      // Add to front
+list.pop_front()            // Remove from front
+list.emplace_back(args...)  // In-place construct
+list.emplace_front(args...) // In-place construct at front
+list.remove(value)          // Remove all occurrences of value
+list.remove_if(predicate)   // Remove elements matching predicate
+list.reverse()              // Reverse list
+list.sort()                 // Sort list
 ```
 
-### Map 特定操作
+### Map-Specific Operations
 ```cpp
-map.insert(key, value)      // 插入元素（返回 pair<bool, size_t>）
-map.emplace(key, ...)       // 原地构造
-map.erase(key)              // 删除元素
-map.for_each(func)          // 遍历（func(key, value)）
-map.count_if(predicate)     // 条件计数
-map.find_if(predicate)      // 条件查找
+map.insert(key, value)      // Insert element (returns pair<bool, size_t>)
+map.emplace(key, ...)       // In-place construct
+map.erase(key)              // Delete element
+map.for_each(func)          // Traverse (func(key, value))
+map.count_if(predicate)     // Conditional count
+map.find_if(predicate)      // Conditional search
 ```
+
 ```cpp
-// 隐式转换到 const std::vector<T>&
+// Implicit conversion to const std::vector<T>&
 const std::vector<int>& std_ref = ts_vec;
 
-// 获取副本
+// Get a copy
 std::vector<int> copy = ts_vec.to_vector();
 
-// 支持标准算法
+// Support standard algorithms
 std::for_each(std_ref.begin(), std_ref.end(), 
     [](int x) { std::cout << x << " "; });
 ```
 
-### 迭代和查询
+### Iteration and Query
 ```cpp
 vec.for_each([](const T& item) { /* process */ });
 vec.find_if([](const T& item) { return item > 10; });
-vec.contains(value)         // 检查是否包含
+vec.contains(value)         // Check if contains value
 ```
 
-## 🏗️ 项目结构
+## 🏗️ Project Structure
 
 ```
 TS_STL/
 ├── include/
-│   └── ts_stl.hpp           # 核心库头文件
+│   └── ts_stl.hpp           # Core library header
 ├── test/
-│   └── test_thread_safe_vector.cpp  # 完整测试套件
+│   └── test_thread_safe_vector.cpp  # Complete test suite
 ├── examples/
-│   └── example_usage.cpp    # 使用示例
-├── CMakeLists.txt          # CMake构建配置
-├── USAGE_GUIDE.md          # 详细使用指南
-└── README.md              # 本文件
+│   └── example_usage.cpp    # Usage examples
+├── CMakeLists.txt          # CMake build configuration
+├── USAGE_GUIDE.md          # Detailed usage guide
+├── docs/
+│   └── ARCHITECTURE.md     # Architecture documentation
+└── README.md              # This file (English version)
 ```
 
-## 📦 编译和运行
+## 📦 Build and Run
 
-### 使用CMake（推荐）
+### Using CMake (Recommended)
 
 ```bash
-# 创建构建目录
+# Create build directory
 mkdir build
 cd build
 
-# 配置和编译
+# Configure and build
 cmake ..
 cmake --build .
 
-# 运行单元测试
+# Run unit tests
 ./test_thread_safe_vector
 
-# 运行示例
+# Run examples
 ./example_usage
 
-# 🎯 运行综合性能测试（包含std::vector对比）
-./comprehensive_performance_test
+# 🎯 Run comprehensive performance benchmark (includes std::vector comparison)
+./performance_benchmark
 ```
 
-### 手动编译
+### Manual Compilation
 
 ```bash
-# 编译测试（需要C++17及以上）
+# Compile tests (requires C++17 or later)
 clang++ -std=c++17 -pthread -I./include \
     test/test_thread_safe_vector.cpp -o test
 
-# 运行
+# Run
 ./test
 
-# 编译综合性能测试
+# Compile comprehensive performance benchmark
 clang++ -std=c++17 -O3 -pthread -I./include \
-    examples/comprehensive_performance_test.cpp -o comprehensive_perf
+    examples/performance_benchmark.cpp -o performance_benchmark
 
-# 运行性能测试
-./comprehensive_perf
+# Run performance benchmark
+./performance_benchmark
 ```
 
-## ✅ 测试覆盖
+## ✅ Test Coverage
 
-库包含全面的测试套件（3个测试文件，35+个测试用例）：
+The library includes a comprehensive test suite (3 test files, 35+ test cases):
 
-### ThreadSafeVector 测试（10个测试组）
-- ✓ 基本操作 (push_back, get, set, etc.)
-- ✓ 容量管理 (resize, reserve, clear)
-- ✓ 拷贝和移动语义
-- ✓ 多线程并发访问
-- ✓ 读写锁策略验证
-- ✓ emplace_back 原地构造
-- ✓ 隐式转换到std::vector
-- ✓ 迭代和查找操作
-- ✓ 异常处理安全性
-- ✓ 两种锁策略对比
+### ThreadSafeVector Tests (10 test groups)
+- ✓ Basic operations (push_back, get, set, etc.)
+- ✓ Capacity management (resize, reserve, clear)
+- ✓ Copy and move semantics
+- ✓ Multi-threaded concurrent access
+- ✓ Read-write lock strategy verification
+- ✓ emplace_back in-place construction
+- ✓ Implicit conversion to std::vector
+- ✓ Iteration and search operations
+- ✓ Exception handling safety
+- ✓ Comparison of two lock strategies
 
-### ThreadSafeList 测试（10个测试组）
-- ✓ 基本操作 (push_back, front, back)
-- ✓ 首部操作 (push_front, pop_front, emplace_front)
-- ✓ 移除操作 (remove, remove_if, clear)
-- ✓ 排序和反转
-- ✓ 查询操作 (contains, count, for_each)
-- ✓ 拷贝和移动语义
-- ✓ 多线程并发访问
-- ✓ 手动锁控制
-- ✓ 复杂数据类型
-- ✓ 列表特定操作
+### ThreadSafeList Tests (10 test groups)
+- ✓ Basic operations (push_back, front, back)
+- ✓ Front operations (push_front, pop_front, emplace_front)
+- ✓ Remove operations (remove, remove_if, clear)
+- ✓ Sort and reverse
+- ✓ Query operations (contains, count, for_each)
+- ✓ Copy and move semantics
+- ✓ Multi-threaded concurrent access
+- ✓ Manual lock control
+- ✓ Complex data types
+- ✓ List-specific operations
 
-### 高级功能测试（5个测试组）
-- ✓ 线程不安全接口性能
-- ✓ 手动锁控制
-- ✓ 读锁接口（C++17+）
-- ✓ 复杂场景
-- ✓ 性能对比
+### Advanced Features Tests (5 test groups)
+- ✓ Thread-unsafe interface performance
+- ✓ Manual lock control
+- ✓ Read lock interface (C++17+)
+- ✓ Complex scenarios
+- ✓ Performance comparison
 
-## �� 锁策略选择指南
+## 🔐 Lock Strategy Selection Guide
 
-### 使用互斥锁（Mutex）：
-- ✅ 读写操作均衡
-- ✅ 对低延迟敏感
-- ✅ 简单的线程协调
-- ✅ 缓存性能重要
+### Use Mutex:
+- ✅ Balanced read-write operations
+- ✅ Sensitive to low latency
+- ✅ Simple thread coordination
+- ✅ Cache performance is important
 
-### 使用读写锁（ReadWrite）：
-- ✅ 缓存系统（大量读，少量写）
-- ✅ 配置管理（读远多于写）
-- ✅ 统计收集
-- ✅ 只读数据库访问
+### Use Read-Write Lock:
+- ✅ Cache systems (lots of reads, few writes)
+- ✅ Configuration management (reads far exceed writes)
+- ✅ Statistics collection
+- ✅ Read-only database access
 
-## 🎯 设计原则
+## 🎯 Design Principles
 
-1. **最小化锁粒度**: 仅在必要时加锁
-2. **零成本抽象**: 编译时多态，无运行时开销
-3. **RAII安全**: 异常安全的资源管理
-4. **STL兼容**: 与标准库无缝集成
-5. **易用性**: 简洁直观的API
+1. **Minimize Lock Granularity**: Lock only when necessary
+2. **Zero-Cost Abstraction**: Compile-time polymorphism, no runtime overhead
+3. **RAII Safety**: Exception-safe resource management
+4. **STL Compatible**: Seamless integration with standard library
+5. **Ease of Use**: Simple and intuitive API
 
-## ⚡ 性能特点
+## ⚡ Performance Characteristics
 
-- **互斥锁版本**: 最快，适合通用场景
-- **读写锁版本**: 读操作快，写操作略慢
-- **编译时优化**: 零开销的策略选择
-- **移动语义支持**: 减少不必要的复制
+- **Mutex Version**: Fastest, suitable for general scenarios
+- **Read-Write Lock Version**: Fast reads, slightly slower writes
+- **Compile-Time Optimization**: Zero-cost strategy selection
+- **Move Semantics Support**: Reduces unnecessary copies
 
-## 📊 性能基准测试
+## 📊 Performance Benchmark Tests
 
-我们提供了全面的性能基准测试程序，对比 TS_STL 与标准 STL 容器的性能。
+We provide comprehensive performance benchmark programs comparing TS_STL with standard STL containers.
 
-### 运行性能测试
+### Run Performance Tests
 
 ```bash
 cd build
 ./performance_benchmark
 ```
 
-### 性能基准测试结果
+### Performance Benchmark Results
 
-| 测试场景 | TS_STL | STD | 开销 |
+| Test Scenario | TS_STL | STD | Overhead |
 |---------|--------|-----|------|
-| **单线程顺序插入** (1M 操作) | 0.0220s | 0.0112s | +96.1% |
-| **单线程随机访问** (1M 操作) | 0.0626s | 0.0445s | +40.7% |
-| **并发写入** (10线程 x 100K) | 0.0804s | 0.0640s* | +25.5% |
-| **List 顺序插入** (100K 操作) | 0.0061s | 0.0046s | +33.3% |
-| **并发读取 RW锁** (10线程 x 1M) | 1.6964s | 0.5929s** | -186.1% |
-| **混合读写** (5线程 x 100K) | 0.0424s | 0.0228s* | +86.2% |
+| **Single-thread sequential insert** (1M operations) | 0.0220s | 0.0112s | +96.1% |
+| **Single-thread random access** (1M operations) | 0.0626s | 0.0445s | +40.7% |
+| **Concurrent write** (10 threads x 100K) | 0.0804s | 0.0640s* | +25.5% |
+| **List sequential insert** (100K operations) | 0.0061s | 0.0046s | +33.3% |
+| **Concurrent read RW-lock** (10 threads x 1M) | 1.6964s | 0.5929s** | -186.1% |
+| **Mixed read/write** (5 threads x 100K) | 0.0424s | 0.0228s* | +86.2% |
 
-> **注:**
-> - 单线程测试中，TS_STL 有额外的锁开销（即使未被使用）
-> - (*) STD 列使用 `std::mutex` 手动加锁
-> - (**) STD 列使用 `std::shared_mutex` 和共享锁
-> - RW锁测试显示 TS_STL 在读密集型场景的优势（186% 倍数差异来自于锁争竞）
+> **Notes:**
+> - Single-thread tests show additional lock overhead (even if unused)
+> - (*) STD column uses `std::mutex` with manual locking
+> - (**) STD column uses `std::shared_mutex` with shared locks
+> - RW-lock test shows TS_STL's advantage in read-heavy scenarios (186% difference from lock contention)
 
-### 性能分析
+### Performance Analysis
 
-#### 单线程性能
-- **Vector 顺序插入**: +96% 开销（锁初始化和检查成本）
-- **Vector 随机访问**: +41% 开销（虽然有锁开销，但缓存友好性相近）
-- **List 操作**: +33% 开销（链表结构相对开销较小）
+#### Single-Thread Performance
+- **Vector sequential insert**: +96% overhead (lock initialization and check cost)
+- **Vector random access**: +41% overhead (though lock overhead exists, cache friendliness is similar)
+- **List operations**: +33% overhead (relatively small overhead for linked list structure)
 
-#### 多线程性能
-- **并发写入**: 仅 +25% 开销（手动锁定成本相近）
-- **并发读取（RW锁）**: TS_STL 快得多（得益于细粒度锁策略）
-- **混合操作**: +86% 开销（取决于读写比例）
+#### Multi-Thread Performance
+- **Concurrent write**: Only +25% overhead (similar manual lock cost)
+- **Concurrent read (RW-lock)**: TS_STL is much faster (benefits from fine-grained lock strategy)
+- **Mixed operations**: +86% overhead (depends on read/write ratio)
 
-### 关键发现
+### Key Findings
 
-1. **单线程场景**：单线程使用时，有一定的锁初始化开销（5-40%）
-   - 解决方案：使用 `unsafe_*` 接口获得零开销
-   - 或使用 `with_write_lock()` 批量操作
+1. **Single-thread scenarios**: Some lock initialization overhead (5-40%)
+   - Solution: Use `unsafe_*` interface for zero overhead
+   - Or use `with_write_lock()` for bulk operations
 
-2. **多线程场景**：在多线程环境下，TS_STL 往往表现更好
-   - 自动锁管理减少了手动错误
-   - 读写锁提供显著优化（并发读取性能提升）
+2. **Multi-thread scenarios**: TS_STL often performs better
+   - Automatic lock management reduces manual errors
+   - Read-write lock provides significant optimization (concurrent read performance boost)
 
-3. **读密集型工作负载**：读写锁 (`vectorRW<T>`) 显著优于互斥锁
-   - 并发读操作可以完全并行
-   - 极大减少了锁争竞
+3. **Read-heavy workloads**: Read-write lock (`vectorRW<T>`) significantly outperforms mutex
+   - Concurrent read operations can be fully parallel
+   - Greatly reduces lock contention
 
-### 优化建议
+### Optimization Recommendations
 
-**当需要极致性能时：**
+**When extreme performance is needed:**
 
 ```cpp
-// ✅ 方式1: 使用 unsafe 接口（需确保外部同步）
+// ✅ Method 1: Use unsafe interface (ensure external synchronization)
 vectorMutex<int> vec;
 {
     auto guard = vec.acquire_write_guard();
     for (int i = 0; i < N; ++i) {
-        vec.unsafe_ref().push_back(i);  // 直接访问，无额外开销
+        vec.unsafe_ref().push_back(i);  // Direct access, no extra overhead
     }
 }
 
-// ✅ 方式2: 批量操作
+// ✅ Method 2: Bulk operations
 vector<int> vec;
 vec.with_write_lock([](auto& v) {
     for (int i = 0; i < N; ++i) {
-        v.unsafe_ref().push_back(i);  // 一次性加锁
+        v.unsafe_ref().push_back(i);  // Single lock for all operations
     }
 });
 
-// ✅ 方式3: 单线程初始化 → 多线程读取
+// ✅ Method 3: Single-thread initialization → Multi-thread read
 vector<int> vec;
-// 单线程初始化完成
+// Single-thread initialization complete
 for (int i = 0; i < N; ++i) {
-    vec.push_back(i);  // 单线程时有开销
+    vec.push_back(i);  // Single-thread has overhead
 }
-// 现在多线程只进行读取操作
+// Now multi-threaded reads only
 ```
 
-## 🔐 线程安全保证
+## 🔐 Thread Safety Guarantees
 
-- **基本异常保证**: 异常后容器处于有效状态
-- **强异常保证**: 多数操作要么完全成功要么完全失败
-- **无异常操作**: 移动操作标记为noexcept
+- **Basic Exception Guarantee**: Container remains in valid state after exception
+- **Strong Exception Guarantee**: Most operations either fully succeed or fully fail
+- **No-Throw Operations**: Move operations marked as noexcept
 
-## 📋 注意事项
+## 📋 Important Notes
 
-1. **指针有效性**: `data()` 返回的指针可能因其他线程的操作而失效
-2. **迭代器**: 在多线程环境中，传统迭代器不适用，改用 `for_each()` 或 `to_vector()`
-3. **死锁风险**: 在回调函数中再次调用容器方法可能导致死锁
-4. **原子性**: 单个操作是原子的，但多操作序列可能需要额外同步
+1. **Pointer Validity**: Pointers returned by `data()` may become invalid due to operations by other threads
+2. **Iterators**: Traditional iterators are not suitable in multi-threaded environment, use `for_each()` or `to_vector()` instead
+3. **Deadlock Risk**: Calling container methods again in callback functions may cause deadlock
+4. **Atomicity**: Individual operations are atomic, but multi-operation sequences may need additional synchronization
 
-## 🚀 扩展性
+## 🚀 Extensibility
 
-这个库可以轻松扩展到其他STL容器：
+This library can be easily extended to other STL containers:
 - ThreadSafeDeque
-- ThreadSafeList
-- ThreadSafeMap
 - ThreadSafeSet
 - ThreadSafeQueue
 - ThreadSafeStack
+- ThreadSafeUnorderedMap
 
-核心的锁管理和策略机制可以直接复用。
+The core lock management and strategy mechanisms are directly reusable.
 
-## 📄 许可证
+## 📄 License
 
-MIT License - 自由使用和修改
+MIT License - Free to use and modify
 
 ---
 
-**快速链接：**
-- [详细使用指南](USAGE_GUIDE.md)
-- [完整API文档](include/ts_stl.hpp) (代码中有详细注释)
-- [测试代码](test/test_thread_safe_vector.cpp)
-- [使用示例](examples/example_usage.cpp)
+**Quick Links:**
+- [Detailed Usage Guide](docs/USAGE_GUIDE.md)
+- [Complete API Documentation](include/ts_stl.hpp) (detailed comments in code)
+- [Test Code](test/test_thread_safe_vector.cpp)
+- [Usage Examples](examples/example_usage.cpp)
 
-## 🆕 高级功能（新增）
+## 🆕 Advanced Features (New)
 
-### 对象初始化详解
+### Object Initialization Details
 
-#### 基础初始化方式对比
+#### Basic Initialization Methods Comparison
 
 ```cpp
-// ❶ 默认构造（推荐简洁用法）
-vector<int> vec1;                    // 自动使用互斥锁
+// ❶ Default construction (recommended for simplicity)
+vector<int> vec1;                    // Automatically uses mutex
 
-// ❷ 使用类型别名（最常用）
-vectorMutex<int> vec2;               // 互斥锁版本
-vectorRW<int> vec3;                  // 读写锁版本（C++17+）
+// ❷ Using type aliases (most common)
+vectorMutex<int> vec2;               // Mutex version
+vectorRW<int> vec3;                  // Read-write lock version (C++17+)
 
-// ❸ 显式模板参数（明确指定）
+// ❸ Explicit template parameters (explicit specification)
 vector<int, LockPolicy::Mutex> vec4;
 #if TS_STL_SUPPORT_RW_LOCK
-vector<int, LockPolicy::ReadWrite> vec5;  // C++17+ 可用
+vector<int, LockPolicy::ReadWrite> vec5;  // Available on C++17+
 #endif
 
-// ❹ 带初始值的构造
-vectorMutex<int> vec6(10);           // 10个默认元素
-vectorMutex<int> vec7(10, 42);       // 10个值为42的元素
+// ❹ Construction with initial values
+vectorMutex<int> vec6(10);           // 10 default elements
+vectorMutex<int> vec7(10, 42);       // 10 elements with value 42
 
-// ❺ 从其他容器初始化
+// ❺ Initialization from other containers
 std::vector<int> source = {1, 2, 3, 4, 5};
 vectorMutex<int> vec8(source.begin(), source.end());
 
-// ❻ 复杂数据类型初始化
+// ❻ Complex data type initialization
 struct User { std::string name; int age; };
-vectorRW<User> users;                // 用于多读少写的场景
+vectorRW<User> users;                // For multi-read, few-write scenarios
 users.push_back({"Alice", 25});
 users.push_back({"Bob", 30});
 ```
 
-#### 不同场景的初始化选择
+#### Lock Strategy Selection for Different Scenarios
 
 ```cpp
-// 场景1: 通用缓冲区 → 互斥锁
+// Scenario 1: General buffer → Mutex
 vectorMutex<std::string> log_buffer;
 log_buffer.push_back("event 1");
 
-// 场景2: 配置数据（读多写少） → 读写锁
+// Scenario 2: Configuration data (read-heavy) → Read-write lock
 vectorRW<Config> config;
 config.push_back(Config{...});
 
-// 场景3: 性能关键代码 → 互斥锁 + 高级接口
-vectorMutex<double> data(1000);  // 预留1000元素
+// Scenario 3: Performance-critical code → Mutex + Advanced interface
+vectorMutex<double> data(1000);  // Pre-allocate 1000 elements
 data.reserve(2000);
 
-// 场景4: 兼容旧代码 → 默认构造
-vector<int> legacy;  // 自动选择互斥锁
+// Scenario 4: Legacy code compatibility → Default construction
+vector<int> legacy;  // Automatically selects mutex
 ```
 
-### 线程不安全接口
-提供零开销的 `unsafe_*` 接口，用于在已获取锁或单线程环境下进行极致优化。
+### Thread-Unsafe Interface
+Provides zero-overhead `unsafe_*` interface for extreme optimization when lock is already held or in single-thread environment.
 
-### 手动锁控制
-- `acquire_write_guard()` - 获取写锁
-- `with_write_lock()` - 在写锁保护下执行代码块
-- `acquire_read_guard()` (C++17+) - 获取读锁
-- `with_read_lock()` (C++17+) - 在读锁保护下执行代码块
+### Manual Lock Control
+- `acquire_write_guard()` - Acquire write lock
+- `with_write_lock()` - Execute code block with write lock protection
+- `acquire_read_guard()` (C++17+) - Acquire read lock
+- `with_read_lock()` (C++17+) - Execute code block with read lock protection
 
-### C++ 版本条件编译
-- C++17+: 完整功能（互斥锁 + 读写锁 + 自旋锁）
-- C++<17: 基础功能（仅互斥锁 + 自旋锁）
-
+### C++ Version Conditional Compilation
+- C++17+: Full features (mutex + read-write lock + spin lock)
+- C++<17: Basic features (mutex + spin lock only)
 
 ---
 
-**快速链接：**
-- [详细使用指南](docs/USAGE_GUIDE.md)
-- [完整API文档](include/ts_stl.hpp) (代码中有详细注释)
-- [测试代码](test/test_thread_safe_vector.cpp)
-- [高级功能测试](test/test_advanced_features.cpp)
-- [使用示例](examples/example_usage.cpp)
+**Quick Links:**
+- [Detailed Usage Guide](docs/USAGE_GUIDE.md)
+- [Complete API Documentation](include/ts_stl.hpp) (detailed comments in code)
+- [Test Code](test/test_thread_safe_vector.cpp)
+- [Advanced Features Tests](test/test_advanced_features.cpp)
+- [Usage Examples](examples/example_usage.cpp)

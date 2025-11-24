@@ -456,7 +456,10 @@ cache.for_each([](const auto& key, const auto& value) {
 | `std::vector` | `vector<T, Policy>` | `vectorMutex<T>` / `vectorRW<T>` | 随机访问，动态数组 |
 | `std::list` | `list<T, Policy>` | `listMutex<T>` / `listRW<T>` | 双向链表，高效插删 |
 | `std::map` | `map<K, V, Comp, Policy>` | `mapMutex<K,V>` / `mapRW<K,V>` | 有序键值对，快速查找 |
-| `std::unordered_map` | `unordered_map<K, V, H, E, Policy>` | `unordered_mapMutex<K,V>` / `unordered_mapRW<K,V>` | 哈希表，O(1)查找 |
+| `std::unordered_map` | `unordered_map<K, V, H, E, Policy>` | `unordered_mapMutex<K,V>` | 哈希表，O(1)查找 |
+| `std::set` | `set<T, Compare, Policy>` | `setMutex<T>` | 有序唯一元素 |
+| `std::unordered_set` | `unordered_set<T, Hash, Equal, Policy>` | `unordered_setMutex<T>` | 哈希表，O(1)查找 |
+| `std::deque` | `deque<T, Policy>` | `dequeMutex<T>` | 双端队列，两端高效 |
 
 ### Vector 元素访问
 ```cpp
@@ -553,6 +556,52 @@ map.for_each(func)          // 遍历（func(key, value)）
 map.count_if(predicate)     // 条件计数
 map.find_if(predicate)      // 条件查找
 ```
+
+### Set 元素访问
+```cpp
+set.insert(element)         // 插入元素（返回 pair<bool, size_t>）
+set.erase(element)          // 删除元素
+set.contains(element)       // 检查元素是否存在
+set.count(element)          // 计数（0 或 1）
+set.count_if(predicate)     // 条件计数
+set.find_if(predicate)      // 条件查找
+set.for_each(func)          // 遍历所有元素
+set.clear()                 // 清空集合
+```
+
+### Unordered Set 元素访问
+```cpp
+uset.insert(element)        // 插入元素（返回 pair<bool, size_t>）
+uset.erase(element)         // 删除元素
+uset.contains(element)      // 检查元素是否存在
+uset.count(element)         // 计数（0 或 1）
+uset.count_if(predicate)    // 条件计数
+uset.find_if(predicate)     // 条件查找
+uset.bucket_count()         // 获取哈希桶个数
+uset.load_factor()          // 获取负载因子
+uset.reserve(n)             // 为n个元素预留空间
+uset.rehash(n)              // 重新哈希为至少n个桶
+uset.for_each(func)         // 遍历所有元素
+uset.clear()                // 清空集合
+```
+
+### Deque 元素访问
+```cpp
+dq.push_back(value)         // 从末尾添加
+dq.pop_back()               // 从末尾移除
+dq.push_front(value)        // 从首部添加
+dq.pop_front()              // 从首部移除
+dq.emplace_back(args...)    // 末尾原地构造
+dq.emplace_front(args...)   // 首部原地构造
+dq.front()                  // 获取首元素
+dq.back()                   // 获取末元素
+dq.at(index)                // 安全访问（带边界检查）
+dq.size()                   // 获取大小
+dq.empty()                  // 检查是否为空
+dq.clear()                  // 清空双端队列
+dq.for_each(func)           // 遍历所有元素
+dq.count_if(predicate)      // 条件计数
+```
 ```cpp
 // 隐式转换到 const std::vector<T>&
 const std::vector<int>& std_ref = ts_vec;
@@ -577,20 +626,25 @@ vec.contains(value)         // 检查是否包含
 ```
 TS_STL/
 ├── include/
-│   ├── ts_stl.hpp           # 核心库头文件
+│   ├── ts_stl.hpp           # 核心库头文件（包含所有容器）
 │   ├── ts_vector.hpp        # 线程安全vector实现
 │   ├── ts_list.hpp          # 线程安全list实现
 │   ├── ts_map.hpp           # 线程安全map实现
 │   ├── ts_unordered_map.hpp # 线程安全unordered_map实现
+│   ├── ts_set.hpp           # 线程安全set实现（新增）
+│   ├── ts_unordered_set.hpp # 线程安全unordered_set实现（新增）
+│   ├── ts_deque.hpp         # 线程安全deque实现（新增）
 │   └── ts_stl_base.hpp      # 基类和锁策略
 ├── test/
-│   ├── test_thread_safe_vector.cpp  # Vector测试
-│   ├── test_thread_safe_list.cpp    # List测试
-│   └── test_unordered_map.cpp       # Unordered map测试
+│   ├── test_thread_safe_vector.cpp   # Vector测试
+│   ├── test_thread_safe_list.cpp     # List测试
+│   ├── test_unordered_map.cpp        # Unordered map测试
+│   └── test_new_containers.cpp       # Set/Unordered Set/Deque测试（新增）
 ├── examples/
-│   ├── example_usage.cpp            # Vector使用示例
-│   ├── example_map_usage.cpp        # Map使用示例
-│   └── example_unordered_map_usage.cpp  # Unordered map使用示例
+│   ├── example_usage.cpp               # Vector使用示例
+│   ├── example_map_usage.cpp           # Map使用示例
+│   ├── example_unordered_map_usage.cpp # Unordered map使用示例
+│   └── example_new_containers.cpp      # Set/Unordered Set/Deque示例（新增）
 ├── CMakeLists.txt          # CMake构建配置
 ├── USAGE_GUIDE.md          # 详细使用指南
 ├── docs/

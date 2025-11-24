@@ -454,6 +454,10 @@ cache.for_each([](const auto& key, const auto& value) {
 | `std::vector` | `vector<T, Policy>` | `vectorMutex<T>` / `vectorRW<T>` | Random access, dynamic array |
 | `std::list` | `list<T, Policy>` | `listMutex<T>` / `listRW<T>` | Doubly-linked list, efficient insert/delete |
 | `std::map` | `map<K, V, Comp, Policy>` | `mapMutex<K,V>` / `mapRW<K,V>` | Ordered key-value pairs, fast lookup |
+| `std::unordered_map` | `unordered_map<K, V, Hash, Equal, Policy>` | `unordered_mapMutex<K,V>` | Hash-based key-value pairs, O(1) average lookup |
+| `std::set` | `set<T, Compare, Policy>` | `setMutex<T>` | Ordered unique elements |
+| `std::unordered_set` | `unordered_set<T, Hash, Equal, Policy>` | `unordered_setMutex<T>` | Hash-based unique elements, O(1) average lookup |
+| `std::deque` | `deque<T, Policy>` | `dequeMutex<T>` | Double-ended queue, efficient insert/delete at both ends |
 
 ### Vector Element Access
 ```cpp
@@ -551,6 +555,52 @@ map.count_if(predicate)     // Conditional count
 map.find_if(predicate)      // Conditional search
 ```
 
+### Set Element Access
+```cpp
+set.insert(element)         // Insert element (returns pair<bool, size_t>)
+set.erase(element)          // Delete element
+set.contains(element)       // Check if element exists
+set.count(element)          // Count (0 or 1)
+set.count_if(predicate)     // Conditional count
+set.find_if(predicate)      // Conditional search
+set.for_each(func)          // Traverse all elements
+set.clear()                 // Clear the set
+```
+
+### Unordered Set Element Access
+```cpp
+uset.insert(element)        // Insert element (returns pair<bool, size_t>)
+uset.erase(element)         // Delete element
+uset.contains(element)      // Check if element exists
+uset.count(element)         // Count (0 or 1)
+uset.count_if(predicate)    // Conditional count
+uset.find_if(predicate)     // Conditional search
+uset.bucket_count()         // Get number of buckets
+uset.load_factor()          // Get current load factor
+uset.reserve(n)             // Reserve space for n elements
+uset.rehash(n)              // Rehash to have at least n buckets
+uset.for_each(func)         // Traverse all elements
+uset.clear()                // Clear the set
+```
+
+### Deque Element Access
+```cpp
+dq.push_back(value)         // Add to back
+dq.pop_back()               // Remove from back
+dq.push_front(value)        // Add to front
+dq.pop_front()              // Remove from front
+dq.emplace_back(args...)    // In-place construct at back
+dq.emplace_front(args...)   // In-place construct at front
+dq.front()                  // Get front element
+dq.back()                   // Get back element
+dq.at(index)                // Safe access with bounds check
+dq.size()                   // Get size
+dq.empty()                  // Check if empty
+dq.clear()                  // Clear the deque
+dq.for_each(func)           // Traverse all elements
+dq.count_if(predicate)      // Conditional count
+```
+
 ```cpp
 // Implicit conversion to const std::vector<T>&
 const std::vector<int>& std_ref = ts_vec;
@@ -575,20 +625,25 @@ vec.contains(value)         // Check if contains value
 ```
 TS_STL/
 ├── include/
-│   ├── ts_stl.hpp           # Core library header
+│   ├── ts_stl.hpp           # Core library header (includes all containers)
 │   ├── ts_vector.hpp        # Thread-safe vector implementation
 │   ├── ts_list.hpp          # Thread-safe list implementation
 │   ├── ts_map.hpp           # Thread-safe map implementation
 │   ├── ts_unordered_map.hpp # Thread-safe unordered_map implementation
+│   ├── ts_set.hpp           # Thread-safe set implementation (NEW)
+│   ├── ts_unordered_set.hpp # Thread-safe unordered_set implementation (NEW)
+│   ├── ts_deque.hpp         # Thread-safe deque implementation (NEW)
 │   └── ts_stl_base.hpp      # Base classes and lock policies
 ├── test/
-│   ├── test_thread_safe_vector.cpp  # Vector tests
-│   ├── test_thread_safe_list.cpp    # List tests
-│   └── test_unordered_map.cpp       # Unordered map tests
+│   ├── test_thread_safe_vector.cpp   # Vector tests
+│   ├── test_thread_safe_list.cpp     # List tests
+│   ├── test_unordered_map.cpp        # Unordered map tests
+│   └── test_new_containers.cpp       # Set/Unordered Set/Deque tests (NEW)
 ├── examples/
-│   ├── example_usage.cpp            # Vector usage examples
-│   ├── example_map_usage.cpp        # Map usage examples
-│   └── example_unordered_map_usage.cpp  # Unordered map usage examples
+│   ├── example_usage.cpp               # Vector usage examples
+│   ├── example_map_usage.cpp           # Map usage examples
+│   ├── example_unordered_map_usage.cpp # Unordered map usage examples
+│   └── example_new_containers.cpp      # Set/Unordered Set/Deque examples (NEW)
 ├── CMakeLists.txt          # CMake build configuration
 ├── USAGE_GUIDE.md          # Detailed usage guide
 ├── docs/

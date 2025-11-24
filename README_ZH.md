@@ -179,18 +179,22 @@ TS_STL 现已支持以下线程安全容器：
 | **vector** | 序列容器，快速随机访问 | 大多数数据存储场景 |
 | **list** | 链表容器，快速插入删除 | 频繁插入删除操作 |
 | **map** | 有序关联容器，键值对存储 | 字典、缓存、配置存储 |
+| **unordered_map** | 哈希表关联容器，键值对存储 | 快速查找、哈希存储 |
 
 #### 容器功能对比
 
-| 功能 | Vector | List | Map |
-|------|--------|------|-----|
-| 随机访问 | ✅ O(1) | ❌ O(n) | ❌ O(log n) |
-| 顺序遍历 | ✅ | ✅ | ✅ |
-| 头部插入 | ❌ O(n) | ✅ O(1) | ✅ O(log n) |
-| 尾部插入 | ✅ O(1)* | ✅ O(1) | ✅ O(log n) |
-| 键值查询 | ❌ | ❌ | ✅ O(log n) |
-| 线程安全 | ✅ | ✅ | ✅ |
-| 多锁策略 | ✅ (4种) | ✅ (4种) | ✅ (4种) |
+| 功能 | Vector | List | Map | Unordered Map |
+|------|--------|------|-----|---------------|
+| 随机访问 | ✅ O(1) | ❌ O(n) | ❌ O(log n) | ✅ O(1)* |
+| 顺序遍历 | ✅ | ✅ | ✅ | ✅ |
+| 头部插入 | ❌ O(n) | ✅ O(1) | ✅ O(log n) | ✅ O(1)* |
+| 尾部插入 | ✅ O(1)* | ✅ O(1) | ✅ O(log n) | ✅ O(1)* |
+| 键值查询 | ❌ | ❌ | ✅ O(log n) | ✅ O(1)* |
+| 有序遍历 | ✅ | ✅ | ✅ | ❌ |
+| 线程安全 | ✅ | ✅ | ✅ | ✅ |
+| 多锁策略 | ✅ (4种) | ✅ (4种) | ✅ (4种) | ✅ (4种) |
+
+*平均情况；最坏情况下哈希碰撞会导致 O(n)
 
 ### Vector 特性
 
@@ -452,6 +456,7 @@ cache.for_each([](const auto& key, const auto& value) {
 | `std::vector` | `vector<T, Policy>` | `vectorMutex<T>` / `vectorRW<T>` | 随机访问，动态数组 |
 | `std::list` | `list<T, Policy>` | `listMutex<T>` / `listRW<T>` | 双向链表，高效插删 |
 | `std::map` | `map<K, V, Comp, Policy>` | `mapMutex<K,V>` / `mapRW<K,V>` | 有序键值对，快速查找 |
+| `std::unordered_map` | `unordered_map<K, V, H, E, Policy>` | `unordered_mapMutex<K,V>` / `unordered_mapRW<K,V>` | 哈希表，O(1)查找 |
 
 ### Vector 元素访问
 ```cpp
@@ -486,12 +491,31 @@ map.erase(key)              // 删除元素
 map.find_if(predicate)      // 条件查找
 ```
 
-### 通用容量管理（Vector & List & Map）
+### Unordered Map 元素访问
+```cpp
+umap[key]                   // 获取/插入元素（线程安全）
+umap.get(key)               // 获取元素（不存在返回默认值）
+umap.get(key, default_val)  // 获取元素，指定默认值
+umap.set(key, value)        // 设置元素
+umap.at(key)                // 安全访问（带边界检查）
+umap.contains(key)          // 检查键是否存在
+umap.count(key)             // 计数（0 或 1）
+umap.count_if(predicate)    // 条件计数
+umap.insert(key, value)     // 插入元素
+umap.erase(key)             // 删除元素
+umap.find_if(predicate)     // 条件查找
+umap.bucket_count()         // 获取桶数量
+umap.load_factor()          // 获取装载因子
+umap.reserve(n)             // 预留n个元素的空间
+umap.rehash(n)              // 重新哈希至少为n个桶
+```
+
+### 通用容量管理（Vector & List & Map & Unordered Map）
 ```cpp
 vec.size()                  // 获取大小
 vec.capacity()              // 获取容量（Vector）
 vec.empty()                 // 检查是否为空
-vec.reserve(count)          // 预留空间（Vector）
+vec.reserve(count)          // 预留空间（Vector & Unordered Map）
 vec.resize(count)           // 改变大小
 vec.shrink_to_fit()         // 收缩到实际大小（Vector）
 map.clear()                 // 清空容器
@@ -553,13 +577,24 @@ vec.contains(value)         // 检查是否包含
 ```
 TS_STL/
 ├── include/
-│   └── ts_stl.hpp           # 核心库头文件
+│   ├── ts_stl.hpp           # 核心库头文件
+│   ├── ts_vector.hpp        # 线程安全vector实现
+│   ├── ts_list.hpp          # 线程安全list实现
+│   ├── ts_map.hpp           # 线程安全map实现
+│   ├── ts_unordered_map.hpp # 线程安全unordered_map实现
+│   └── ts_stl_base.hpp      # 基类和锁策略
 ├── test/
-│   └── test_thread_safe_vector.cpp  # 完整测试套件
+│   ├── test_thread_safe_vector.cpp  # Vector测试
+│   ├── test_thread_safe_list.cpp    # List测试
+│   └── test_unordered_map.cpp       # Unordered map测试
 ├── examples/
-│   └── example_usage.cpp    # 使用示例
+│   ├── example_usage.cpp            # Vector使用示例
+│   ├── example_map_usage.cpp        # Map使用示例
+│   └── example_unordered_map_usage.cpp  # Unordered map使用示例
 ├── CMakeLists.txt          # CMake构建配置
 ├── USAGE_GUIDE.md          # 详细使用指南
+├── docs/
+│   └── ARCHITECTURE.md     # 架构文档
 └── README.md              # 本文件
 ```
 
@@ -768,13 +803,19 @@ for (int i = 0; i < N; ++i) {
 
 ## 🚀 扩展性
 
-这个库可以轻松扩展到其他STL容器：
+这个库可以轻松扩展到其他STL容器。已实现的容器：
+- ✅ **vector** - 序列容器
+- ✅ **list** - 双向链表
+- ✅ **map** - 有序关联容器
+- ✅ **unordered_map** - 哈希关联容器
+
+可以扩展到：
 - ThreadSafeDeque
-- ThreadSafeList
-- ThreadSafeMap
 - ThreadSafeSet
+- ThreadSafeUnorderedSet
 - ThreadSafeQueue
 - ThreadSafeStack
+- 等等...
 
 核心的锁管理和策略机制可以直接复用。
 

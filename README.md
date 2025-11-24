@@ -177,18 +177,22 @@ TS_STL now supports the following thread-safe containers:
 | **vector** | Sequence container with fast random access | Most data storage scenarios |
 | **list** | Linked list container with fast insert/delete | Frequent insert/delete operations |
 | **map** | Ordered associative container with key-value pairs | Dictionary, cache, configuration storage |
+| **unordered_map** | Hash-based associative container with key-value pairs | Fast lookups, hash-based storage |
 
 #### Container Feature Comparison
 
-| Feature | Vector | List | Map |
-|---------|--------|------|-----|
-| Random Access | ✅ O(1) | ❌ O(n) | ❌ O(log n) |
-| Sequential Traversal | ✅ | ✅ | ✅ |
-| Head Insertion | ❌ O(n) | ✅ O(1) | ✅ O(log n) |
-| Tail Insertion | ✅ O(1)* | ✅ O(1) | ✅ O(log n) |
-| Key-Value Query | ❌ | ❌ | ✅ O(log n) |
-| Thread-Safe | ✅ | ✅ | ✅ |
-| Multiple Lock Strategies | ✅ (4 types) | ✅ (4 types) | ✅ (4 types) |
+| Feature | Vector | List | Map | Unordered Map |
+|---------|--------|------|-----|---------------|
+| Random Access | ✅ O(1) | ❌ O(n) | ❌ O(log n) | ✅ O(1)* |
+| Sequential Traversal | ✅ | ✅ | ✅ | ✅ |
+| Head Insertion | ❌ O(n) | ✅ O(1) | ✅ O(log n) | ✅ O(1)* |
+| Tail Insertion | ✅ O(1)* | ✅ O(1) | ✅ O(log n) | ✅ O(1)* |
+| Key-Value Query | ❌ | ❌ | ✅ O(log n) | ✅ O(1)* |
+| Ordered Traversal | ✅ | ✅ | ✅ | ❌ |
+| Thread-Safe | ✅ | ✅ | ✅ | ✅ |
+| Multiple Lock Strategies | ✅ (4 types) | ✅ (4 types) | ✅ (4 types) | ✅ (4 types) |
+
+*Average case; worst case is O(n) with hash collisions
 
 ### Vector Features
 
@@ -484,12 +488,31 @@ map.erase(key)              // Delete element
 map.find_if(predicate)      // Conditional search
 ```
 
-### Generic Capacity Management (Vector & List & Map)
+### Unordered Map Element Access
+```cpp
+umap[key]                   // Get/insert element (thread-safe)
+umap.get(key)               // Get element (return default if not found)
+umap.get(key, default_val)  // Get element with specified default value
+umap.set(key, value)        // Set element
+umap.at(key)                // Safe access (with bounds check)
+umap.contains(key)          // Check if key exists
+umap.count(key)             // Count (0 or 1)
+umap.count_if(predicate)    // Conditional count
+umap.insert(key, value)     // Insert element
+umap.erase(key)             // Delete element
+umap.find_if(predicate)     // Conditional search
+umap.bucket_count()         // Get number of buckets
+umap.load_factor()          // Get current load factor
+umap.reserve(n)             // Reserve space for n elements
+umap.rehash(n)              // Rehash to have at least n buckets
+```
+
+### Generic Capacity Management (Vector & List & Map & Unordered Map)
 ```cpp
 vec.size()                  // Get size
 vec.capacity()              // Get capacity (Vector)
 vec.empty()                 // Check if empty
-vec.reserve(count)          // Reserve space (Vector)
+vec.reserve(count)          // Reserve space (Vector & Unordered Map)
 vec.resize(count)           // Change size
 vec.shrink_to_fit()         // Shrink to actual size (Vector)
 map.clear()                 // Clear container
@@ -552,11 +575,20 @@ vec.contains(value)         // Check if contains value
 ```
 TS_STL/
 ├── include/
-│   └── ts_stl.hpp           # Core library header
+│   ├── ts_stl.hpp           # Core library header
+│   ├── ts_vector.hpp        # Thread-safe vector implementation
+│   ├── ts_list.hpp          # Thread-safe list implementation
+│   ├── ts_map.hpp           # Thread-safe map implementation
+│   ├── ts_unordered_map.hpp # Thread-safe unordered_map implementation
+│   └── ts_stl_base.hpp      # Base classes and lock policies
 ├── test/
-│   └── test_thread_safe_vector.cpp  # Complete test suite
+│   ├── test_thread_safe_vector.cpp  # Vector tests
+│   ├── test_thread_safe_list.cpp    # List tests
+│   └── test_unordered_map.cpp       # Unordered map tests
 ├── examples/
-│   └── example_usage.cpp    # Usage examples
+│   ├── example_usage.cpp            # Vector usage examples
+│   ├── example_map_usage.cpp        # Map usage examples
+│   └── example_unordered_map_usage.cpp  # Unordered map usage examples
 ├── CMakeLists.txt          # CMake build configuration
 ├── USAGE_GUIDE.md          # Detailed usage guide
 ├── docs/
@@ -769,12 +801,19 @@ for (int i = 0; i < N; ++i) {
 
 ## 🚀 Extensibility
 
-This library can be easily extended to other STL containers:
+This library can be easily extended to other STL containers. Already implemented:
+- ✅ **vector** - Sequence container
+- ✅ **list** - Doubly-linked list
+- ✅ **map** - Ordered associative container
+- ✅ **unordered_map** - Hash-based associative container
+
+Can be extended to:
 - ThreadSafeDeque
 - ThreadSafeSet
+- ThreadSafeUnorderedSet
 - ThreadSafeQueue
 - ThreadSafeStack
-- ThreadSafeUnorderedMap
+- And more...
 
 The core lock management and strategy mechanisms are directly reusable.
 

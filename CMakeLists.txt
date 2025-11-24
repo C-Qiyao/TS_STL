@@ -38,17 +38,28 @@ target_compile_features(performance_benchmark PRIVATE cxx_std_17)
 add_executable(example_map_usage examples/example_map_usage.cpp)
 target_compile_features(example_map_usage PRIVATE cxx_std_17)
 
+# 创建 Unordered Map 测试可执行文件
+add_executable(test_unordered_map test/test_unordered_map.cpp)
+target_compile_features(test_unordered_map PRIVATE cxx_std_17)
+
+# 创建 Unordered Map 示例可执行文件
+add_executable(example_unordered_map_usage examples/example_unordered_map_usage.cpp)
+target_compile_features(example_unordered_map_usage PRIVATE cxx_std_17)
+
 # 需要线程库
 find_package(Threads REQUIRED)
 target_link_libraries(test_thread_safe_vector PRIVATE Threads::Threads)
 target_link_libraries(test_advanced_features PRIVATE Threads::Threads)
 target_link_libraries(test_thread_safe_list PRIVATE Threads::Threads)
+target_link_libraries(test_unordered_map PRIVATE Threads::Threads)
 target_link_libraries(example_usage PRIVATE Threads::Threads)
 target_link_libraries(performance_benchmark PRIVATE Threads::Threads)
 target_link_libraries(example_map_usage PRIVATE Threads::Threads)
+target_link_libraries(example_unordered_map_usage PRIVATE Threads::Threads)
 
 # 添加测试
 enable_testing()
 add_test(NAME ThreadSafeVectorTests COMMAND test_thread_safe_vector)
 add_test(NAME AdvancedFeaturesTests COMMAND test_advanced_features)
 add_test(NAME ThreadSafeListTests COMMAND test_thread_safe_list)
+add_test(NAME ThreadSafeUnorderedMapTests COMMAND test_unordered_map)

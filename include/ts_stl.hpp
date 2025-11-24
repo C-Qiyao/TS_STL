@@ -10,6 +10,7 @@
 #include "ts_vector.hpp"
 #include "ts_list.hpp"
 #include "ts_map.hpp"
+#include "ts_unordered_map.hpp"
 
 namespace ts_stl {
 
@@ -71,6 +72,26 @@ using mapSpinLock = map<Key, T, Compare, LockPolicy::SpinLock>;
 template <typename Key, typename T, typename Compare = std::less<Key>>
 using mapLockFree = map<Key, T, Compare, LockPolicy::LockFree>;
 
+// ==================== Unordered Map 类型别名 ====================
+
+// 使用互斥锁的线程安全unordered_map
+template <typename Key, typename T, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>>
+using unordered_mapMutex = unordered_map<Key, T, Hash, KeyEqual, LockPolicy::Mutex>;
+
+#if TS_STL_SUPPORT_RW_LOCK
+// 使用读写锁的线程安全unordered_map（仅C++17及以上）
+template <typename Key, typename T, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>>
+using unordered_mapRW = unordered_map<Key, T, Hash, KeyEqual, LockPolicy::ReadWrite>;
+#endif
+
+// 使用自旋锁的线程安全unordered_map
+template <typename Key, typename T, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>>
+using unordered_mapSpinLock = unordered_map<Key, T, Hash, KeyEqual, LockPolicy::SpinLock>;
+
+// 使用无锁策略的线程安全unordered_map（极限性能，需要外部同步）
+template <typename Key, typename T, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>>
+using unordered_mapLockFree = unordered_map<Key, T, Hash, KeyEqual, LockPolicy::LockFree>;
+
 // ==================== 兼容性别名 - 与旧API保持兼容 ====================
 
 template <typename T, LockPolicy Policy = LockPolicy::Mutex>
@@ -122,6 +143,25 @@ using ThreadSafeMapLockFree = mapLockFree<Key, T, Compare>;
 #if TS_STL_SUPPORT_RW_LOCK
 template <typename Key, typename T, typename Compare = std::less<Key>>
 using ThreadSafeMapRW = mapRW<Key, T, Compare>;
+#endif
+
+// ==================== Unordered Map 兼容性别名 ====================
+
+template <typename Key, typename T, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>, LockPolicy Policy = LockPolicy::Mutex>
+using ThreadSafeUnorderedMap = unordered_map<Key, T, Hash, KeyEqual, Policy>;
+
+template <typename Key, typename T, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>>
+using ThreadSafeUnorderedMapMutex = unordered_mapMutex<Key, T, Hash, KeyEqual>;
+
+template <typename Key, typename T, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>>
+using ThreadSafeUnorderedMapSpinLock = unordered_mapSpinLock<Key, T, Hash, KeyEqual>;
+
+template <typename Key, typename T, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>>
+using ThreadSafeUnorderedMapLockFree = unordered_mapLockFree<Key, T, Hash, KeyEqual>;
+
+#if TS_STL_SUPPORT_RW_LOCK
+template <typename Key, typename T, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>>
+using ThreadSafeUnorderedMapRW = unordered_mapRW<Key, T, Hash, KeyEqual>;
 #endif
 
 } // namespace ts_stl

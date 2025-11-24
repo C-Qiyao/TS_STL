@@ -26,6 +26,20 @@ A high-performance, easy-to-use thread-safe STL container proxy library. Provide
 - 🛡️ Exception Handling: Complete exception safety guarantees
 - 🏗️ CRTP Design: Static polymorphism, eliminates code duplication
 
+
+### Supported Containers
+
+| Container | Class Name | Type Alias | Features |
+|-----------|-----------|-----------|----------|
+| `std::vector` | `vector<T, Policy>` | `vectorMutex<T>` / `vectorRW<T>` | Random access, dynamic array |
+| `std::list` | `list<T, Policy>` | `listMutex<T>` / `listRW<T>` | Doubly-linked list, efficient insert/delete |
+| `std::map` | `map<K, V, Comp, Policy>` | `mapMutex<K,V>` / `mapRW<K,V>` | Ordered key-value pairs, fast lookup |
+| `std::unordered_map` | `unordered_map<K, V, Hash, Equal, Policy>` | `unordered_mapMutex<K,V>` | Hash-based key-value pairs, O(1) average lookup |
+| `std::set` | `set<T, Compare, Policy>` | `setMutex<T>` | Ordered unique elements |
+| `std::unordered_set` | `unordered_set<T, Hash, Equal, Policy>` | `unordered_setMutex<T>` | Hash-based unique elements, O(1) average lookup |
+| `std::deque` | `deque<T, Policy>` | `dequeMutex<T>` | Double-ended queue, efficient insert/delete at both ends |
+
+
 ### 🔴 Thread Safety Comparison
 
 | Test | TS_STL | STD Containers |
@@ -37,15 +51,6 @@ A high-performance, easy-to-use thread-safe STL container proxy library. Provide
 
 > ⚠️ **Important**: STD containers crash in multi-threaded environments!
 
-### Concurrent Read/Write Performance Quick Reference
-
-```
-✅ Choose vectorMutex       → Best for general use, stable and efficient in all scenarios
-✅ Choose vectorLockFree    → Single-thread initialization, zero overhead (100% performance)
-⚠️ Caution vectorRW         → Read-write lock advantages not clearly shown
-⚠️ Avoid vectorSpinLock     → Poor performance in high contention (only 20%)
-❌ Multi-thread don't use std::vector → Thread-unsafe, will crash
-```
 
 **Performance Data**: 
 - `vectorLockFree` single-thread performance = std::vector's 100% (zero overhead)
@@ -133,66 +138,8 @@ A high-performance, easy-to-use thread-safe STL container proxy library. Provide
 | mapMutex | 124.77 | 10000 | 80 | 97.3% | ✓ |
 | mapRW | 121.34 | 10000 | 82 | 100.0% | ✓ |
 
-### Performance Usage Recommendations
-
-```
-Scenario                      Recommended Container
--------------------------     ---------------------------
-Single-thread/Initialization  vectorLockFree (zero overhead)
-Multi-thread concurrent write vectorMutex or vectorSpinLock
-Multi-thread concurrent read  vectorRW (clear RW-lock advantage)
-Read-heavy (90:10)            vectorRW (RW-lock optimal)
-Balanced (50:50)              vectorMutex (universally stable)
-High-contention scenario      Avoid vectorSpinLock
-```
-
 ---
 
-### Usage Recommendations
-
-```cpp
-// ✅ Correct: Initialization phase
-vectorLockFree<int> init_data;
-for (int i = 0; i < 1000000; ++i) {
-    init_data.push_back(i);  // Very fast!
-}
-
-// Switch to thread-safe version
-vectorMutex<int> safe_data(init_data);
-
-// ❌ Wrong: Concurrent access
-std::thread t1([&init_data]() { init_data.push_back(1); });
-std::thread t2([&init_data]() { init_data.push_back(2); });
-// Will crash!
-```
-
-## 📦 Supported Containers
-
-TS_STL now supports the following thread-safe containers:
-
-### Implemented Containers
-
-| Container | Description | Use Case |
-|-----------|-------------|----------|
-| **vector** | Sequence container with fast random access | Most data storage scenarios |
-| **list** | Linked list container with fast insert/delete | Frequent insert/delete operations |
-| **map** | Ordered associative container with key-value pairs | Dictionary, cache, configuration storage |
-| **unordered_map** | Hash-based associative container with key-value pairs | Fast lookups, hash-based storage |
-
-#### Container Feature Comparison
-
-| Feature | Vector | List | Map | Unordered Map |
-|---------|--------|------|-----|---------------|
-| Random Access | ✅ O(1) | ❌ O(n) | ❌ O(log n) | ✅ O(1)* |
-| Sequential Traversal | ✅ | ✅ | ✅ | ✅ |
-| Head Insertion | ❌ O(n) | ✅ O(1) | ✅ O(log n) | ✅ O(1)* |
-| Tail Insertion | ✅ O(1)* | ✅ O(1) | ✅ O(log n) | ✅ O(1)* |
-| Key-Value Query | ❌ | ❌ | ✅ O(log n) | ✅ O(1)* |
-| Ordered Traversal | ✅ | ✅ | ✅ | ❌ |
-| Thread-Safe | ✅ | ✅ | ✅ | ✅ |
-| Multiple Lock Strategies | ✅ (4 types) | ✅ (4 types) | ✅ (4 types) | ✅ (4 types) |
-
-*Average case; worst case is O(n) with hash collisions
 
 ### Vector Features
 
@@ -444,20 +391,6 @@ cache.for_each([](const auto& key, const auto& value) {
 | Read operations far exceed writes | **Read-Write Lock** (C++17+) | `vectorRW<T>` |
 | Unsure about choice | **Mutex** | `vector<T>` |
 | Need maximum compatibility | **Mutex** | Auto-selected under C++11/14 |
-
-## 📚 Main API
-
-### Supported Containers
-
-| Container | Class Name | Type Alias | Features |
-|-----------|-----------|-----------|----------|
-| `std::vector` | `vector<T, Policy>` | `vectorMutex<T>` / `vectorRW<T>` | Random access, dynamic array |
-| `std::list` | `list<T, Policy>` | `listMutex<T>` / `listRW<T>` | Doubly-linked list, efficient insert/delete |
-| `std::map` | `map<K, V, Comp, Policy>` | `mapMutex<K,V>` / `mapRW<K,V>` | Ordered key-value pairs, fast lookup |
-| `std::unordered_map` | `unordered_map<K, V, Hash, Equal, Policy>` | `unordered_mapMutex<K,V>` | Hash-based key-value pairs, O(1) average lookup |
-| `std::set` | `set<T, Compare, Policy>` | `setMutex<T>` | Ordered unique elements |
-| `std::unordered_set` | `unordered_set<T, Hash, Equal, Policy>` | `unordered_setMutex<T>` | Hash-based unique elements, O(1) average lookup |
-| `std::deque` | `deque<T, Policy>` | `dequeMutex<T>` | Double-ended queue, efficient insert/delete at both ends |
 
 ### Vector Element Access
 ```cpp
@@ -767,29 +700,6 @@ cd build
 ./performance_benchmark
 ```
 
-### Performance Benchmark Results
-
-| Test Scenario | TS_STL | STD | Overhead |
-|---------|--------|-----|------|
-| **Single-thread sequential insert** (1M operations) | 0.0220s | 0.0112s | +96.1% |
-| **Single-thread random access** (1M operations) | 0.0626s | 0.0445s | +40.7% |
-| **Concurrent write** (10 threads x 100K) | 0.0804s | 0.0640s* | +25.5% |
-| **List sequential insert** (100K operations) | 0.0061s | 0.0046s | +33.3% |
-| **Concurrent read RW-lock** (10 threads x 1M) | 1.6964s | 0.5929s** | -186.1% |
-| **Mixed read/write** (5 threads x 100K) | 0.0424s | 0.0228s* | +86.2% |
-
-> **Notes:**
-> - Single-thread tests show additional lock overhead (even if unused)
-> - (*) STD column uses `std::mutex` with manual locking
-> - (**) STD column uses `std::shared_mutex` with shared locks
-> - RW-lock test shows TS_STL's advantage in read-heavy scenarios (186% difference from lock contention)
-
-### Performance Analysis
-
-#### Single-Thread Performance
-- **Vector sequential insert**: +96% overhead (lock initialization and check cost)
-- **Vector random access**: +41% overhead (though lock overhead exists, cache friendliness is similar)
-- **List operations**: +33% overhead (relatively small overhead for linked list structure)
 
 #### Multi-Thread Performance
 - **Concurrent write**: Only +25% overhead (similar manual lock cost)
@@ -854,23 +764,6 @@ for (int i = 0; i < N; ++i) {
 3. **Deadlock Risk**: Calling container methods again in callback functions may cause deadlock
 4. **Atomicity**: Individual operations are atomic, but multi-operation sequences may need additional synchronization
 
-## 🚀 Extensibility
-
-This library can be easily extended to other STL containers. Already implemented:
-- ✅ **vector** - Sequence container
-- ✅ **list** - Doubly-linked list
-- ✅ **map** - Ordered associative container
-- ✅ **unordered_map** - Hash-based associative container
-
-Can be extended to:
-- ThreadSafeDeque
-- ThreadSafeSet
-- ThreadSafeUnorderedSet
-- ThreadSafeQueue
-- ThreadSafeStack
-- And more...
-
-The core lock management and strategy mechanisms are directly reusable.
 
 ## 📄 License
 
